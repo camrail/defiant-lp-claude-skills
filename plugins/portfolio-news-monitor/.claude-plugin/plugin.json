@@ -1,0 +1,19 @@
+{
+  "name": "portfolio-news-monitor",
+  "version": "0.1.0",
+  "description": "Scaffolds a daily portfolio-news intelligence dashboard. One skill that asks for your portfolio, drops a customizable methodology + dashboard template into your project folder, and creates daily + weekly scheduled refreshes.",
+  "author": {
+    "name": "Defiant"
+  },
+  "homepage": "https://github.com/camrail/defiant-lp-claude-skills",
+  "repository": "https://github.com/camrail/defiant-lp-claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "portfolio",
+    "vc",
+    "news",
+    "monitoring",
+    "dashboard",
+    "scheduled-tasks"
+  ]
+}

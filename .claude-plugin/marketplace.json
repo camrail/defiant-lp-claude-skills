@@ -1,0 +1,27 @@
+{
+  "name": "defiant-lp-claude-skills",
+  "owner": {
+    "name": "Defiant",
+    "url": "https://github.com/camrail"
+  },
+  "metadata": {
+    "description": "Claude Code skills and plugins for LPs and VCs — portfolio monitoring, diligence, and workflow automation.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "portfolio-news-monitor",
+      "source": "./plugins/portfolio-news-monitor",
+      "description": "Scaffolds a daily portfolio-news intelligence dashboard with valuation-sensitive items flagged, plus daily and weekly scheduled refreshes.",
+      "version": "0.1.0",
+      "category": "research",
+      "keywords": [
+        "portfolio",
+        "vc",
+        "news",
+        "monitoring",
+        "dashboard"
+      ]
+    }
+  ]
+}

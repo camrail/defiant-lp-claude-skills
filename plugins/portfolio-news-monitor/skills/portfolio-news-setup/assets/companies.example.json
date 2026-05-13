@@ -1,0 +1,18 @@
+{
+  "companies": [
+    {
+      "name": "Acme AI",
+      "website": "https://acme.ai/",
+      "category": "AI / Developer Tools",
+      "founders": ["Jane Doe", "John Smith"],
+      "summary": "Replace this with a one-sentence description of the company — what they do and any colour worth carrying every day (founded year, last round, notable customers)."
+    },
+    {
+      "name": "Beacon Health",
+      "website": "https://beaconhealth.com/",
+      "category": "HealthTech / Clinical AI",
+      "founders": ["Alex Rivera"],
+      "summary": "Replace this with a one-sentence description. Keep it short — the dashboard renders this directly under the company name."
+    }
+  ]
+}
