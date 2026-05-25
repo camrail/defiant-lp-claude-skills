@@ -22,6 +22,23 @@
         "monitoring",
         "dashboard"
       ]
+    },
+    {
+      "name": "fund-rollup-starter",
+      "source": "./plugins/fund-rollup-starter",
+      "description": "One-time guided setup that turns an LP's or family office's folder of fund statements (PDF or Excel, any administrator) into a portfolio roll-up workbook AND a bespoke, reusable roll-up skill named for them.",
+      "version": "0.1.0",
+      "category": "finance",
+      "keywords": [
+        "lp",
+        "limited-partner",
+        "family-office",
+        "private-markets",
+        "fund-statements",
+        "capital-account",
+        "roll-up",
+        "portfolio"
+      ]
     }
   ]
 }

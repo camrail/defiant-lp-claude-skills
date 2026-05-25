@@ -1,0 +1,21 @@
+{
+  "name": "fund-rollup-starter",
+  "version": "0.1.0",
+  "description": "One-time guided setup that takes a limited partner or family office from a folder of fund statements (PDF and Excel, any administrator) to a finished portfolio roll-up workbook AND a bespoke, reusable roll-up skill named for them — so every future quarter is one step.",
+  "author": {
+    "name": "Defiant"
+  },
+  "homepage": "https://github.com/camrail/defiant-lp-claude-skills",
+  "repository": "https://github.com/camrail/defiant-lp-claude-skills",
+  "license": "MIT",
+  "keywords": [
+    "lp",
+    "limited-partner",
+    "family-office",
+    "private-markets",
+    "fund-statements",
+    "capital-account",
+    "roll-up",
+    "portfolio"
+  ]
+}
