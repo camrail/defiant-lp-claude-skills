@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio News Monitor</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='5' width='22' height='22' rx='3' fill='none' stroke='%232563eb' stroke-width='2.5'/%3E%3Cline x1='10' y1='11' x2='22' y2='11' stroke='%232563eb' stroke-width='3' stroke-linecap='round'/%3E%3Cline x1='10' y1='16' x2='22' y2='16' stroke='%232563eb' stroke-width='1.5' stroke-linecap='round'/%3E%3Cline x1='10' y1='19' x2='22' y2='19' stroke='%232563eb' stroke-width='1.5' stroke-linecap='round'/%3E%3Cline x1='10' y1='22' x2='18' y2='22' stroke='%232563eb' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --panel-2: #f4f5f7;
+    --border: #e4e6eb;
+    --text: #111418;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --material: #dc2626;
+    --context: #b45309;
+    --good: #15803d;
+    --sample: #b45309;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 28px 80px; }
+
+  /* Sample-data banner — sticks to top of viewport when DASHBOARD_DATA.is_example is true */
+  .sample-banner {
+    position: sticky; top: 0; z-index: 100;
+    background: #f3f4f6;
+    color: #4b5563;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 9px 0;
+  }
+  .sample-banner-inner {
+    max-width: 1240px; margin: 0 auto; padding: 0 28px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px;
+  }
+  .sample-banner strong {
+    font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 11px;
+    padding: 2px 8px; border-radius: 4px;
+    background: #e5e7eb;
+    color: #374151;
+  }
+
+  header.hero {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+    margin-bottom: 12px; gap: 12px;
+  }
+  h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
+  .firm-logo { width: 32px; height: 32px; border-radius: 6px; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .meta strong { color: var(--text); font-weight: 600; }
+  .subtitle { color: var(--muted); margin: 4px 0 28px; font-size: 14px; }
+
+  /* Top sections — clean dividers, no tinted backgrounds.
+     Divider sits close to its section above; whitespace below
+     gives a clear break before the next section's heading. */
+  .new-strip, .flagged {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    padding: 0 0 14px;
+    margin-bottom: 44px;
+  }
+  .new-strip h2, .flagged h2, .section-heading {
+    margin: 0 0 14px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: var(--text);
+  }
+  .section-heading { margin-top: 8px; }
+  .flag-item {
+    display: flex; gap: 14px; padding: 10px 0;
+    border-top: 1px solid var(--border);
+  }
+  .flag-item:first-of-type { border-top: 0; padding-top: 2px; }
+  .flag-co {
+    font-weight: 600; min-width: 130px; color: var(--text);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .flag-icon { width: 16px; height: 16px; border-radius: 3px; flex: 0 0 auto; }
+  .flag-body { flex: 1; }
+  .flag-body a { color: var(--text); text-decoration: none; border-bottom: 1px dotted var(--muted); }
+  .flag-body a:hover { border-bottom-color: var(--accent); color: var(--accent); }
+  .flag-why { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  /* Grid of company cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(540px, 1fr)); gap: 20px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 22px 18px;
+  }
+  .card-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 4px; gap: 8px;
+  }
+  .card h3 { margin: 0; font-size: 19px; letter-spacing: -0.01em; }
+  .card h3 a { color: var(--text); text-decoration: none; }
+  .card h3 a:hover { color: var(--accent); }
+  .co-icon { width: 22px; height: 22px; border-radius: 5px; vertical-align: -5px; margin-right: 8px; }
+  .tag {
+    display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 999px;
+    background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .summary { color: var(--muted); font-size: 13px; margin: 8px 0 16px; }
+  .section-label {
+    font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em;
+    margin: 16px 0 8px; font-weight: 600;
+  }
+  /* Item rows — Material gets a small red dot prefix, Context has no marker */
+  .item {
+    padding: 9px 0; border-top: 1px solid var(--border);
+  }
+  .item:first-of-type { border-top: 0; padding-top: 2px; }
+  .item-title {
+    color: var(--text); text-decoration: none;
+    display: inline; line-height: 1.4;
+  }
+  .item-title:hover { color: var(--accent); }
+  .item.material .item-title::before {
+    content: "";
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: var(--material);
+    margin-right: 9px; vertical-align: 2px;
+  }
+
+  /* Empty-section row — subtle one-liner */
+  .item-empty {
+    font-size: 12px; color: var(--muted); font-style: italic;
+    padding: 6px 0; border-top: 1px solid var(--border);
+  }
+  .item-empty:first-of-type { border-top: 0; padding-top: 2px; }
+  .new-pill {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+    background: rgba(21,128,61,0.10); color: var(--good); border: 1px solid rgba(21,128,61,0.30);
+    margin-left: 6px; vertical-align: middle;
+  }
+  .item a { color: var(--text); text-decoration: none; }
+  .item a:hover { color: var(--accent); }
+  .item-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .item-meta .dot { margin: 0 6px; color: var(--border); }
+  .pod-tldr { color: var(--text); font-size: 13px; margin-top: 6px; opacity: 0.92; }
+  .pod-read { color: var(--muted); font-size: 12px; margin-top: 4px; font-style: italic; }
+  footer {
+    margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 12px;
+  }
+  footer code { background: var(--panel-2); padding: 2px 6px; border-radius: 4px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .legend-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--material); }
+
+  /* Hidden by default; the renderer toggles when content is empty */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="sample-banner" class="sample-banner hidden">
+  <div class="sample-banner-inner">
+    <strong>Sample data</strong>
+    <span>You are looking at example data shipped with the plugin. Run the daily refresh to see your own portfolio.</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header class="hero">
+  <div>
+    <h1 id="title">Portfolio News Monitor</h1>
+    <div class="subtitle" id="subtitle">Daily intelligence on your portfolio &middot; valuation-sensitive items flagged at the top</div>
+  </div>
+  <div class="meta">Last updated: <strong id="as-of">—</strong></div>
+</header>
+
+<section class="new-strip" id="new-strip">
+  <h2 id="new-strip-heading">New since last refresh</h2>
+  <div id="new-today"></div>
+</section>
+
+<section class="flagged hidden" id="flagged-section">
+  <h2>Flagged this week</h2>
+  <div id="flagged"></div>
+</section>
+
+<h2 class="section-heading">Companies</h2>
+<div class="grid" id="grid"></div>
+
+<footer>
+  <div class="legend" style="margin-bottom: 10px;">
+    <span><span class="legend-dot"></span> Material — valuation-sensitive (funding, M&amp;A, exec change, regulatory, material customer/product)</span>
+    <span>Other items are context — useful background, no action required</span>
+    <span><span class="new-pill">NEW</span> Event happened today</span>
+  </div>
+  <div>
+    This dashboard is rewritten each morning by the <code>portfolio-news-daily</code> scheduled task.
+    A separate <code>portfolio-news-weekly</code> task produces a Friday digest.
+    Edit <code>methodology.md</code> or <code>companies.json</code> to change the rules or portfolio.
+  </div>
+</footer>
+
+</div>
+
+<!--
+  Data loading. The example file sets DASHBOARD_DATA only if it is undefined,
+  so the real file (written by the daily refresh) wins when present.
+  Pre-refresh or in-repo preview, the example data renders with a banner.
+-->
+<script src="dashboard-data.example.js"></script>
+<script src="dashboard-data.js"></script>
+
+<script>
+(function () {
+  var data = window.DASHBOARD_DATA || {};
+
+  // Lookup so flag items (which key off company name) can resolve a domain
+  // for their favicon without duplicating it in the data.
+  var companyByName = {};
+  (data.companies || []).forEach(function (c) {
+    if (c && c.name) companyByName[c.name] = c;
+  });
+
+  var $ = function (sel) { return document.querySelector(sel); };
+
+  function el(tag, opts, children) {
+    var e = document.createElement(tag);
+    if (opts) {
+      if (opts.class) e.className = opts.class;
+      if (opts.text != null) e.textContent = opts.text;
+      if (opts.attrs) for (var k in opts.attrs) e.setAttribute(k, opts.attrs[k]);
+    }
+    if (children) for (var i = 0; i < children.length; i++) if (children[i]) e.appendChild(children[i]);
+    return e;
+  }
+
+  function link(href, text) {
+    return el('a', { text: text, attrs: { href: href, target: '_blank', rel: 'noopener' } });
+  }
+
+  function newPill() {
+    return el('span', { class: 'new-pill', text: 'NEW' });
+  }
+
+  function domainOf(website) {
+    if (!website) return null;
+    try { return new URL(website).hostname.replace(/^www\./, ''); }
+    catch (e) { return null; }
+  }
+
+  function faviconUrl(domain) {
+    return 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(domain) + '&sz=128';
+  }
+
+  // Date → human-friendly relative string ("today", "3 days ago", "2 weeks ago").
+  // Falls back to the raw string if unparseable. Both sides are truncated to
+  // date-only so timezone wobble doesn't push items into the wrong bucket.
+  function relativeDate(s) {
+    if (!s) return '';
+    var d = new Date(s);
+    if (isNaN(d)) return s;
+    var now = new Date();
+    var a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var b = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var days = Math.round((b - a) / 86400000);
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 0)  return 'in ' + Math.abs(days) + ' days';
+    if (days < 7)  return days + ' days ago';
+    if (days < 30) {
+      var weeks = Math.round(days / 7);
+      return (weeks === 1 ? '1 week' : weeks + ' weeks') + ' ago';
+    }
+    if (days < 60) return '1 month ago';
+    return Math.round(days / 30) + ' months ago';
+  }
+
+  // ---- Sample banner ----
+  if (data.is_example) {
+    $('#sample-banner').classList.remove('hidden');
+  }
+
+  // ---- Branding ----
+  var settings = data.settings || {};
+  if (settings.accent_color) {
+    document.documentElement.style.setProperty('--accent', settings.accent_color);
+  }
+  if (settings.firm_domain) {
+    var img = el('img', { class: 'firm-logo', attrs: { src: faviconUrl(settings.firm_domain), alt: '' } });
+    $('#title').insertBefore(img, $('#title').firstChild);
+  }
+  if (settings.firm_name) {
+    $('#subtitle').textContent =
+      'Daily intelligence on ' + settings.firm_name + "'s portfolio · valuation-sensitive items flagged at the top";
+  }
+
+  // ---- As-of ----
+  if (data.as_of) {
+    $('#as-of').textContent = relativeDate(data.as_of);
+    $('#as-of').title = data.as_of;
+  }
+
+  // ---- New since last refresh ----
+  // Items appearing here are derived from companies[].news/podcasts/signals
+  // whose event date is on or after data.last_refresh. The section is always
+  // visible; it shows an empty-state line when there are no new items.
+  var lastRefreshLabel = data.last_refresh ? relativeDate(data.last_refresh) : 'last refresh';
+  var lastRefreshDate = data.last_refresh ? new Date(data.last_refresh) : null;
+  var headingEl = $('#new-strip-heading');
+  headingEl.textContent = 'New since ' + lastRefreshLabel;
+  if (data.last_refresh) headingEl.title = data.last_refresh;
+
+  var newSince = [];
+  (data.companies || []).forEach(function (co) {
+    itemsFor(co).forEach(function (item) {
+      if (!item || !item.url) return;
+      if (lastRefreshDate && item.date) {
+        var d = new Date(item.date);
+        if (isNaN(d) || d < lastRefreshDate) return;
+      } else if (lastRefreshDate) {
+        return; // no date on item → can't tell, skip
+      }
+      newSince.push({
+        company: co.name,
+        domain: co.domain || domainOf(co.website),
+        url: item.url,
+        title: item.title,
+        why: item.context
+      });
+    });
+  });
+
+  var nt = $('#new-today');
+  if (newSince.length) {
+    newSince.forEach(function (it) { nt.appendChild(renderFlagItem(it, false)); });
+  } else {
+    nt.appendChild(el('div', { class: 'item-empty', text: 'No new items since ' + lastRefreshLabel + '.' }));
+  }
+
+  // ---- Flagged this week ----
+  var flagged = data.flagged || [];
+  if (flagged.length) {
+    var fl = $('#flagged');
+    for (var j = 0; j < flagged.length; j++) fl.appendChild(renderFlagItem(flagged[j], true));
+    $('#flagged-section').classList.remove('hidden');
+  }
+
+  // ---- Company grid ----
+  var grid = $('#grid');
+  var companies = data.companies || [];
+  for (var k = 0; k < companies.length; k++) grid.appendChild(renderCard(companies[k]));
+
+  // ---- Renderers ----
+
+  function renderFlagItem(item, showNewPill) {
+    var co = el('div', { class: 'flag-co' });
+    var ref = item.company ? companyByName[item.company] : null;
+    var domain = item.domain || (ref ? (ref.domain || domainOf(ref.website)) : null);
+    if (domain) {
+      co.appendChild(el('img', { class: 'flag-icon', attrs: { src: faviconUrl(domain), alt: '' } }));
+    }
+    co.appendChild(document.createTextNode(item.company || ''));
+    if (showNewPill && item.is_new) co.appendChild(newPill());
+
+    var body = el('div', { class: 'flag-body' });
+    body.appendChild(link(item.url, item.title || item.url));
+    if (item.why) body.appendChild(el('div', { class: 'flag-why', text: item.why }));
+    return el('div', { class: 'flag-item' }, [co, body]);
+  }
+
+  // Per-company items: prefer the unified `items` array, fall back to merging
+  // legacy `news` + `podcasts` arrays so older data files still render.
+  // Sort by event date, most recent first.
+  function itemsFor(co) {
+    var items = co.items
+      ? co.items.slice()
+      : [].concat(co.news || [], co.podcasts || []);
+    items.sort(function (a, b) {
+      var da = a && a.date ? new Date(a.date).getTime() : 0;
+      var db = b && b.date ? new Date(b.date).getTime() : 0;
+      return (db || 0) - (da || 0);
+    });
+    return items;
+  }
+
+  function renderCard(co) {
+    var head = el('div', { class: 'card-head' });
+    var h3 = el('h3');
+    var domain = co.domain || domainOf(co.website);
+    if (domain) h3.appendChild(el('img', { class: 'co-icon', attrs: { src: faviconUrl(domain), alt: '' } }));
+    h3.appendChild(link(co.website || '#', co.name || 'Unknown'));
+    head.appendChild(h3);
+    if (co.category) head.appendChild(el('span', { class: 'tag', text: co.category }));
+
+    var card = el('article', { class: 'card' }, [head]);
+    if (co.summary) card.appendChild(el('div', { class: 'summary', text: co.summary }));
+
+    var items = itemsFor(co);
+    if (items.length) {
+      items.forEach(function (item) { card.appendChild(renderItem(item)); });
+    } else {
+      card.appendChild(emptyRow('items'));
+    }
+
+    return card;
+  }
+
+  function renderItem(item) {
+    var tier = (item.tier || 'context').toLowerCase();
+    if (tier !== 'material' && tier !== 'context') tier = 'context';
+
+    var row = el('div', { class: 'item ' + tier });
+
+    var title = el('a', {
+      class: 'item-title',
+      text: item.title || item.url,
+      attrs: { href: item.url, target: '_blank', rel: 'noopener' }
+    });
+    row.appendChild(title);
+    if (item.is_new) {
+      row.appendChild(document.createTextNode(' '));
+      row.appendChild(newPill());
+    }
+
+    var parts = [];
+    if (item.source)  parts.push({ text: item.source });
+    if (item.date)    parts.push({ text: relativeDate(item.date), title: item.date });
+    if (item.context) parts.push({ text: item.context });
+    if (parts.length) {
+      var meta = el('div', { class: 'item-meta' });
+      parts.forEach(function (p, i) {
+        if (i > 0) meta.appendChild(el('span', { class: 'dot', text: '·' }));
+        if (p.title) {
+          meta.appendChild(el('span', { text: p.text, attrs: { title: p.title } }));
+        } else {
+          meta.appendChild(document.createTextNode(p.text));
+        }
+      });
+      row.appendChild(meta);
+    }
+
+    if (item.tldr) row.appendChild(el('div', { class: 'pod-tldr', text: 'TL;DR: ' + item.tldr }));
+    if (item.read_through) row.appendChild(el('div', { class: 'pod-read', text: 'Portfolio read-through: ' + item.read_through }));
+
+    return row;
+  }
+
+  function emptyRow(key) {
+    return el('div', { class: 'item-empty', text: 'No ' + key + ' this cycle.' });
+  }
+})();
+</script>
+</body>
+</html>

@@ -12,8 +12,8 @@
     {
       "name": "portfolio-news-monitor",
       "source": "./plugins/portfolio-news-monitor",
-      "description": "Scaffolds a daily portfolio-news intelligence dashboard with valuation-sensitive items flagged, plus daily and weekly scheduled refreshes.",
-      "version": "0.1.0",
+      "description": "Scaffolds a daily portfolio-news intelligence dashboard. Ask for one domain per line, auto-enriches each company, runs the first refresh, and creates daily + weekly scheduled tasks. Dashboard is a constant HTML template; each refresh writes a data file the page loads on open. Customize afterward by chatting to Claude.",
+      "version": "0.3.0",
       "category": "research",
       "keywords": [
         "portfolio",

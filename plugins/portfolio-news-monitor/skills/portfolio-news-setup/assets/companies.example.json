@@ -1,4 +1,9 @@
 {
+  "settings": {
+    "firm_name": "Skylark Capital",
+    "firm_domain": "skylark.com",
+    "accent_color": "#2563eb"
+  },
   "companies": [
     {
       "name": "Acme AI",

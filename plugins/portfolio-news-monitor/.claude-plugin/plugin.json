@@ -1,7 +1,7 @@
 {
   "name": "portfolio-news-monitor",
-  "version": "0.1.0",
-  "description": "Scaffolds a daily portfolio-news intelligence dashboard. One skill that asks for your portfolio, drops a customizable methodology + dashboard template into your project folder, and creates daily + weekly scheduled refreshes.",
+  "version": "0.3.0",
+  "description": "Scaffolds a daily portfolio-news intelligence dashboard. Ask for one domain per line, auto-enriches each company, runs the first refresh, and creates daily + weekly scheduled tasks. Dashboard is a constant HTML template; each refresh writes a data file the page loads on open. Customize afterward by chatting to Claude.",
   "author": {
     "name": "Defiant"
   },

@@ -10,30 +10,34 @@ description: >
   project folder, then creates daily and weekly scheduled tasks that refresh
   the dashboard automatically.
 metadata:
-  version: "0.1.0"
+  version: "0.3.0"
   author: "Defiant"
 ---
 
 # Portfolio News Setup
 
-Scaffold a daily portfolio news monitor in the user's project folder. After this skill runs, the user has a working setup: an editable methodology, a styled dashboard template, a companies list, and two scheduled tasks (daily refresh + weekly digest) that run unattended.
+Scaffold a daily portfolio news monitor in the user's project folder. After this skill runs, the user has a working setup: an editable methodology, a styled dashboard, a companies list, and two scheduled tasks (daily refresh + weekly digest) that run unattended.
 
-The plugin's job ends after this skill runs. Everything the user might want to customize lives in their workspace files — dashboard styling, triage rules, company list, sections. They edit those files directly, not the plugin.
+The plugin's job ends after this skill runs. Everything the user might want to customize lives in their workspace files — dashboard styling, triage rules, company list. They edit those files directly, not the plugin.
 
 ## What you're building
 
 A folder in the user's workspace containing:
 
-- `companies.json` — the portfolio list (populated from the user's answers)
-- `methodology.md` — triage rules, Hot/Watch/Noise definitions, decay logic, dashboard structure
-- `dashboard-template.html` — styled HTML shell with content regions marked by HTML comments
-- `.state/seen-items.json` — initialized empty; the daily refresh appends to this
-- `dashboard.html` — produced by the first refresh; rewritten each morning
+- `companies.json` — top-level `settings` (firm name, firm domain, accent colour) + a `companies` array (the portfolio).
+- `methodology.md` — triage rules (Material / Context), decay logic, dashboard structure, render schema.
+- `dashboard.html` — the styled dashboard. Constant template with an inline JS renderer; reads `dashboard-data.js` on load. **Never rewritten by the refresh.**
+- `dashboard-data.example.js` — sample data fallback so the dashboard renders before the first refresh runs.
+- `.state/seen-items.json` — initialized empty; the daily refresh appends to this.
+
+After the first refresh, also:
+
+- `dashboard-data.js` — written by every daily refresh. Sets `window.DASHBOARD_DATA = {…}` with the current portfolio state.
 
 Plus two scheduled tasks created via the scheduled-tasks MCP:
 
-- `portfolio-news-daily` — runs every weekday morning, refreshes the dashboard
-- `portfolio-news-weekly` — runs Friday afternoon, produces a digest of the week's Hot items
+- `portfolio-news-daily` — runs every weekday morning, rewrites `dashboard-data.js`.
+- `portfolio-news-weekly` — runs Friday afternoon, produces a digest of the week's Material items.
 
 ## Process
 
@@ -41,25 +45,49 @@ Follow these steps in order. Do not skip the elicitation step — the company li
 
 ### Step 1 — Identify the project folder
 
-If the user has selected a working directory, use that. Otherwise ask them where to scaffold the monitor — they may want to create a new folder for it (e.g. `~/Documents/Claude/Projects/Portfolio News Monitor`). Confirm the absolute path before writing files. If the folder doesn't exist, create it.
+If the user has selected a Cowork directory, use that. Otherwise ask them where to scaffold the monitor — they may want to create a new folder for it (e.g. `~/Documents/Claude/Projects/Portfolio News Monitor`). Confirm the absolute path before writing files. If the folder doesn't exist, create it.
 
-### Step 2 — Elicit the portfolio
+### Step 2 — Elicit the portfolio (keep it minimal — just enough to enrich)
 
-Show an elicitation form asking for each portfolio company. The form should collect, per company:
+Show an elicitation form with three fields:
 
-- **Name** (required)
-- **Website** (required)
-- **Category** — short tag like "AI / Developer Tools" or "HealthTech / Clinical AI" (required)
-- **Founders** — comma-separated names (optional but useful — search uses these for podcast/video discovery)
-- **One-line summary** — what they do, any colour worth carrying every day (optional)
+- **Companies** — a single textarea. Label it clearly: **"One domain per line"** with placeholder text like `blitzy.com`<br>`rivia.com`<br>`generalmind.com`. Assume the user follows that instruction — every non-blank line is a domain. Strip whitespace, lowercase, drop any leading `http://` or `https://` or trailing slash, and treat what remains as the domain. Skip blank lines.
+- **Your firm's website** (optional) — used to brand the dashboard with the firm's logo and accent colour. Single-line input. If blank, skip branding and use the default palette.
+- **Refresh time** — what time the daily refresh should run. Default to **07:00 local time, Monday through Friday**. The weekly digest runs **Friday at 16:00 local time** regardless.
 
-Allow the user to skip the form and instead paste a JSON blob matching the companies.json schema. Show the example schema from `${CLAUDE_PLUGIN_ROOT}/skills/portfolio-news-setup/assets/companies.example.json` if they ask.
+Do not ask for category, founders, or summary in the form. Those get filled in by enrichment (Step 3).
 
 Aim for 3–10 companies on the first pass. Tell the user they can edit `companies.json` later to add or remove.
 
-### Step 3 — Pick the daily refresh time
+### Step 3 — Auto-enrich each company
 
-Ask what time they want the daily refresh to run. Default to **07:00 local time, Monday through Friday**. The weekly digest runs **Friday at 16:00 local time**.
+For each entry the user provided, do a quick web search to fill in the fields the form skipped. Goal: produce a `companies.json` that's ready to use without the user editing anything.
+
+For every company, find and record:
+
+- **`name`** — the company's actual name. Use the casing they use themselves.
+- **`website`** — canonical URL with `https://` and trailing slash. Fix common variations (e.g. `blitzy.com` → `https://blitzy.com/`).
+- **`category`** — short tag describing what they do (e.g. "AI / Developer Tools", "HealthTech / Clinical AI"). Two to four words. Pull from how the company describes itself.
+- **`founders`** — array of founder names. If you can find one or two via web search, include them. If you cannot find any with reasonable confidence, leave the array empty rather than guessing.
+- **`summary`** — one sentence: what they do, plus any standing colour worth carrying every day (founded year, last round, notable customers). No more than ~30 words.
+
+If a company is ambiguous (multiple companies match the domain or name), pick the one whose site matches the URL the user gave. If you genuinely can't find a company, surface that to the user before proceeding — do not write a placeholder.
+
+Do enrichment in parallel where possible. Do not run more than ~3 searches per company.
+
+### Step 3b — Brand the dashboard (only if a firm website was given)
+
+If the user provided a firm website in Step 2, populate the `settings` block of `companies.json`. Branding is **data-driven** — the dashboard reads these fields at render time. Do NOT edit `dashboard.html` itself.
+
+For the firm domain provided:
+
+1. **`firm_name`** — pull a clean name from the firm's site `<title>` or `<meta property="og:site_name">`. Strip any tagline. If you can't get a clean name, use the domain itself (e.g. `"Skylark"` from `skylark.com`).
+2. **`firm_domain`** — the bare domain (lowercased, no scheme, no path, no trailing slash). The renderer uses this for the firm's favicon in the header.
+3. **`accent_color`** — try one `WebFetch` on `https://{firm_domain}/`. Look for (in order): a `<meta name="theme-color" content="#…">` tag, then a primary colour referenced in inline CSS (`--primary`, `--brand`, `--accent`, or a strong colour on the main nav or hero). Validate: valid hex, not near-white, not near-black. If it passes, use it; if not, leave `accent_color` unset (the dashboard uses its default blue).
+
+Do not spend more than one `WebFetch` on this step. If anything fails, fall back to the default silently — branding is a nice-to-have, not a blocker.
+
+If no firm website was provided in Step 2, omit the `settings` block entirely from `companies.json`. The dashboard renders with default styling and a generic title.
 
 ### Step 4 — Write the workspace files
 
@@ -68,10 +96,11 @@ Copy these files from the plugin's assets directory into the project folder:
 | Source (under `${CLAUDE_PLUGIN_ROOT}/skills/portfolio-news-setup/assets/`) | Destination (in project folder) |
 |---|---|
 | `methodology.md` | `methodology.md` |
-| `dashboard-template.html` | `dashboard-template.html` |
+| `dashboard.html` | `dashboard.html` |
+| `dashboard-data.example.js` | `dashboard-data.example.js` |
 | `seen-items.empty.json` | `.state/seen-items.json` |
 
-Then synthesize `companies.json` from the user's elicitation answers and write it to the project folder. Use the same schema as `companies.example.json` — a top-level `companies` array with `name`, `website`, `category`, `founders` (array), and `summary` fields.
+Then synthesize `companies.json` from the user's elicitation answers + enrichment + branding (Steps 2–3b) and write it to the project folder. Use the schema in `companies.example.json` as the reference: top-level `settings` (optional) + `companies` array (required).
 
 Create the `.state/` subdirectory if it doesn't exist.
 
@@ -98,26 +127,38 @@ Use `mcp__scheduled-tasks__create_scheduled_task` to create two tasks:
 
 If the scheduled-tasks MCP exposes parameters with different names (e.g. `cron` vs `schedule`, `cwd` vs `working_directory`), adapt — list its tools first to confirm the schema. If creation fails, surface the error and ask the user how to proceed; do not silently swallow it.
 
-### Step 6 — Offer to run the first refresh now
+### Step 6 — Run the first refresh now (do not ask)
 
-Ask whether the user wants to run the daily refresh immediately so they have a populated `dashboard.html` to look at before tomorrow morning. If yes, execute the same instructions from `daily-prompt.md` directly in the current session, with the project folder as context.
+Immediately execute the instructions from `daily-prompt.md` against the project folder. This produces the first `dashboard-data.js`. Do not ask the user whether they want this — the goal is that when setup finishes, day one is already done and the dashboard is populated with real data (not just the example fallback).
 
-### Step 7 — Print the customization guide
+If the refresh fails partway through (e.g. a search times out), still write a best-effort `dashboard-data.js` with whatever was gathered, save what's in `.state/seen-items.json`, and surface the partial failure to the user.
 
-Tell the user, in plain language, where each customizable knob lives:
+### Step 7 — Hand off with a launch link
 
-- **Add or remove companies** → edit `companies.json`
-- **Change triage rules / Hot vs Watch criteria / decay window** → edit `methodology.md`
-- **Restyle the dashboard / change colors / add or remove sections** → edit `dashboard-template.html` (CSS at top, content regions marked with HTML comments)
-- **Change the refresh schedule** → use the Scheduled Tasks UI to edit `portfolio-news-daily` or `portfolio-news-weekly`
-- **Pause everything** → disable the scheduled tasks; files remain in place
+End the conversation with a clear, short handoff. The structure:
 
-Link the dashboard file with a `computer://` link so they can open it directly.
+1. One line confirming setup is done and day one ran.
+2. A `computer://` link to `dashboard.html` in the project folder. Phrase it as "Open your dashboard". This is the most important element — it should be obvious where to click.
+3. A brief "next refresh: tomorrow at HH:MM" line so the user knows when to expect updates.
+4. A short paragraph telling them they can customize by just chatting to Claude — they don't need to touch files unless they want to. Give 3–4 example asks they could send right now, phrased as natural-language requests rather than instructions:
+   - *"Add stripe.com to my portfolio."*
+   - *"Drop Rivia."*
+   - *"Treat any podcast appearance as Material."*
+   - *"Move the weekly digest to Mondays."*
 
-## Schema for companies.json
+   Make clear that Claude will edit `companies.json`, `methodology.md`, `dashboard.html`, or the scheduled tasks on their behalf — they don't need to know which file holds what.
+
+Do not dump a long summary of what was written. The handoff is a launch pad, not a status report.
+
+## Schema for `companies.json`
 
 ```json
 {
+  "settings": {
+    "firm_name": "Skylark Capital",
+    "firm_domain": "skylark.com",
+    "accent_color": "#2563eb"
+  },
   "companies": [
     {
       "name": "Company Name",
@@ -130,13 +171,15 @@ Link the dashboard file with a `computer://` link so they can open it directly.
 }
 ```
 
-## Schema for .state/seen-items.json
+`settings` is optional. All three settings fields are optional within it — anything you omit falls back to the dashboard's defaults.
 
-The refresh skill appends to this file. The setup skill only initializes it as `{"items": []}`. See `methodology.md` (in assets) for the item schema — it's documented there because the refresh skill is what actually mutates this file.
+## Schema for `.state/seen-items.json`
+
+The refresh skill appends to this file. The setup skill only initializes it as `{"items": []}`. See `methodology.md` for the item schema — it's documented there because the refresh skill is what mutates this file.
 
 ## Edge cases
 
-- **User reruns the setup skill in a folder that already has these files**: ask whether to overwrite, merge (add companies to existing list), or abort. Default to abort.
+- **User reruns the setup skill in a folder that already has these files**: ask whether to overwrite, merge (add companies to the existing list), or abort. Default to abort.
 - **User has fewer than 3 companies**: that's fine, proceed. The dashboard still works.
 - **User declines to use scheduled tasks**: write the files anyway and tell them how to run a refresh manually ("ask Claude to refresh the portfolio news monitor in this folder").
 - **scheduled-tasks MCP is not available**: tell the user they'll need that connector for the automatic refresh, write the files, and provide the prompt text so they can paste it into any scheduling tool they have.
@@ -144,5 +187,8 @@ The refresh skill appends to this file. The setup skill only initializes it as `
 ## What not to do
 
 - Do not embed the methodology rules inside the scheduled-task prompts. The prompts must reference `methodology.md` in the workspace so the user's edits take effect on the next run.
-- Do not write the `dashboard.html` itself during setup — that's the daily refresh's job. Setup writes only the template.
 - Do not modify any plugin files. All writes go into the user's project folder.
+- Do not edit `dashboard.html` to inject the firm logo or accent colour. Branding is data — it lives in `companies.json.settings` and the renderer applies it at load time.
+- Do not ask the user for company details that you can look up. The whole point of enrichment is that they hand you a list of names or domains and get a working monitor back.
+- Do not ask the user whether to run the first refresh. Run it.
+- Do not leave placeholder summaries or "TBD" categories in `companies.json`. If enrichment genuinely fails for a company, raise it with the user before writing the file rather than shipping a placeholder.
