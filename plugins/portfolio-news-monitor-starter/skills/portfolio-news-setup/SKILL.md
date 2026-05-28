@@ -7,8 +7,8 @@ description: >
   to bootstrap a recurring news-and-signals dashboard for a list of companies
   (portfolio companies, competitors, accounts, watchlist). It scaffolds a
   styled HTML dashboard and an editable methodology file in the user's chosen
-  project folder, then creates daily and weekly scheduled tasks that refresh
-  the dashboard automatically.
+  project folder, then creates a daily scheduled task that refreshes the
+  dashboard automatically.
 metadata:
   version: "0.3.0"
   author: "Defiant"
@@ -16,7 +16,7 @@ metadata:
 
 # Portfolio News Setup
 
-Scaffold a daily portfolio news monitor in the user's project folder. After this skill runs, the user has a working setup: an editable methodology, a styled dashboard, a companies list, and two scheduled tasks (daily refresh + weekly digest) that run unattended.
+Scaffold a daily portfolio news monitor in the user's project folder. After this skill runs, the user has a working setup: an editable methodology, a styled dashboard, a companies list, and a daily scheduled refresh that runs unattended.
 
 The plugin's job ends after this skill runs. Everything the user might want to customize lives in their workspace files — dashboard styling, triage rules, company list. They edit those files directly, not the plugin.
 
@@ -34,10 +34,9 @@ After the first refresh, also:
 
 - `dashboard-data.js` — written by every daily refresh. Sets `window.DASHBOARD_DATA = {…}` with the current portfolio state.
 
-Plus two scheduled tasks created via the scheduled-tasks MCP:
+Plus one scheduled task created via the scheduled-tasks MCP:
 
 - `portfolio-news-daily` — runs every weekday morning, rewrites `dashboard-data.js`.
-- `portfolio-news-weekly` — runs Friday afternoon, produces a digest of the week's Material items.
 
 ## Process
 
@@ -64,7 +63,7 @@ Show an elicitation form with exactly three fields. The first field is the only 
   Keep this input box clean and simple — it's the quick-start path. Don't pack alternative formats (pipe-separated rows, JSON, comma lists) into the placeholder or label; that just overwhelms the user. The textarea accepts one website per line. Every non-blank line: strip whitespace, lowercase, drop any leading `http://` or `https://` or trailing slash, and treat what remains as the domain. Skip blank lines. Everything else — name, sector, founders, summary — gets filled in by enrichment in Step 3.
 
 - **Your firm's website** (optional) — used to brand the dashboard with the firm's logo and accent colour. Single-line input. If blank, skip branding and use the default palette.
-- **Refresh time** — what time the daily refresh should run. Default to **07:00 local time, Monday through Friday**. The weekly digest runs **Friday at 16:00 local time** regardless.
+- **Refresh time** — what time the daily refresh should run. Default to **07:00 local time, Monday through Friday**.
 
 Do not ask for name, category, founders, or summary in the form. Those get filled in by enrichment (Step 3) — that is the whole point.
 
@@ -117,26 +116,19 @@ Then synthesize `companies.json` from the user's elicitation answers + enrichmen
 
 Create the `.state/` subdirectory if it doesn't exist.
 
-### Step 5 — Create the scheduled tasks
+### Step 5 — Create the scheduled task
 
-Read the two prompt templates:
+Read the daily prompt template:
 
 - `${CLAUDE_PLUGIN_ROOT}/skills/portfolio-news-setup/assets/daily-prompt.md`
-- `${CLAUDE_PLUGIN_ROOT}/skills/portfolio-news-setup/assets/weekly-prompt.md`
 
-Use `mcp__scheduled-tasks__create_scheduled_task` to create two tasks:
+Use `mcp__scheduled-tasks__create_scheduled_task` to create the task:
 
 **Daily task:**
 - Name: `portfolio-news-daily`
 - Schedule: chosen daily time, Mon–Fri
 - Working directory: the project folder
 - Prompt: contents of `daily-prompt.md` verbatim
-
-**Weekly task:**
-- Name: `portfolio-news-weekly`
-- Schedule: Friday at 16:00 local
-- Working directory: the project folder
-- Prompt: contents of `weekly-prompt.md` verbatim
 
 If the scheduled-tasks MCP exposes parameters with different names (e.g. `cron` vs `schedule`, `cwd` vs `working_directory`), adapt — list its tools first to confirm the schema. If creation fails, surface the error and ask the user how to proceed; do not silently swallow it.
 
@@ -157,9 +149,9 @@ End the conversation with a clear, short handoff. The structure:
    - *"Add stripe.com to my portfolio."*
    - *"Drop Rivia."*
    - *"Treat any podcast appearance as Material."*
-   - *"Move the weekly digest to Mondays."*
+   - *"Push the daily refresh to 8am."*
 
-   Make clear that Claude will edit `companies.json`, `methodology.md`, `dashboard.html`, or the scheduled tasks on their behalf — they don't need to know which file holds what.
+   Make clear that Claude will edit `companies.json`, `methodology.md`, `dashboard.html`, or the scheduled task on their behalf — they don't need to know which file holds what.
 
 Do not dump a long summary of what was written. The handoff is a launch pad, not a status report.
 
@@ -194,7 +186,7 @@ The refresh skill appends to this file. The setup skill only initializes it as `
 
 - **User reruns the setup skill in a folder that already has these files**: ask whether to overwrite, merge (add companies to the existing list), or abort. Default to abort.
 - **User has fewer than 3 companies**: that's fine, proceed. The dashboard still works.
-- **User declines to use scheduled tasks**: write the files anyway and tell them how to run a refresh manually ("ask Claude to refresh the portfolio news monitor in this folder").
+- **User declines to use the scheduled task**: write the files anyway and tell them how to run a refresh manually ("ask Claude to refresh the portfolio news monitor in this folder").
 - **scheduled-tasks MCP is not available**: tell the user they'll need that connector for the automatic refresh, write the files, and provide the prompt text so they can paste it into any scheduling tool they have.
 
 ## What not to do

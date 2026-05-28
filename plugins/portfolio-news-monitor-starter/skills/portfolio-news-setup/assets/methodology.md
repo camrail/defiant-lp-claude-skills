@@ -80,10 +80,6 @@ The dashboard has three top-level regions, in order:
 
 A short legend explains the Material dot and the NEW pill. Plus a one-line pointer that the dashboard is rewritten daily.
 
-## Weekly digest
-
-Once a week (Friday), produce a separate digest in `weekly-digest-YYYY-MM-DD.md` alongside `dashboard.html`. The digest summarises the week's Material items grouped by company, with portfolio-read-through commentary. Do not modify the daily dashboard or `dashboard-data.js` during the weekly run.
-
 ## Schema for `dashboard-data.js`
 
 A complete worked example lives in `dashboard-data.example.js`. The shape:
