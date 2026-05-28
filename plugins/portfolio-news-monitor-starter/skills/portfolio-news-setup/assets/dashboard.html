@@ -155,6 +155,19 @@
   .item-meta .dot { margin: 0 6px; color: var(--border); }
   .pod-tldr { color: var(--text); font-size: 13px; margin-top: 6px; opacity: 0.92; }
   .pod-read { color: var(--muted); font-size: 12px; margin-top: 4px; font-style: italic; }
+  /* "Show all (N more)" affordance at the bottom of a company card */
+  .show-all {
+    margin-top: 10px;
+    padding: 4px 0;
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  .show-all:hover { color: var(--accent); }
   footer {
     margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border);
     color: var(--muted); font-size: 12px;
@@ -395,6 +408,9 @@
     return items;
   }
 
+  // Default visible-items-per-card. The rest live behind a "Show all" button.
+  var VISIBLE_ITEMS = 5;
+
   function renderCard(co) {
     var head = el('div', { class: 'card-head' });
     var h3 = el('h3');
@@ -408,10 +424,26 @@
     if (co.summary) card.appendChild(el('div', { class: 'summary', text: co.summary }));
 
     var items = itemsFor(co);
-    if (items.length) {
-      items.forEach(function (item) { card.appendChild(renderItem(item)); });
-    } else {
+    if (!items.length) {
       card.appendChild(emptyRow('items'));
+      return card;
+    }
+
+    var visible = items.slice(0, VISIBLE_ITEMS);
+    var hidden = items.slice(VISIBLE_ITEMS);
+    visible.forEach(function (item) { card.appendChild(renderItem(item)); });
+
+    if (hidden.length) {
+      var btn = el('button', {
+        class: 'show-all',
+        text: 'Show all (' + hidden.length + ' more)',
+        attrs: { type: 'button' }
+      });
+      btn.addEventListener('click', function () {
+        hidden.forEach(function (item) { card.insertBefore(renderItem(item), btn); });
+        btn.remove();
+      });
+      card.appendChild(btn);
     }
 
     return card;

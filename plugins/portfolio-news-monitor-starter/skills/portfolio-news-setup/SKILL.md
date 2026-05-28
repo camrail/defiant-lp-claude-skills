@@ -28,11 +28,10 @@ A folder in the user's workspace containing:
 - `methodology.md` — triage rules (Material / Context), decay logic, dashboard structure, render schema.
 - `dashboard.html` — the styled dashboard. Constant template with an inline JS renderer; reads `dashboard-data.js` on load. **Never rewritten by the refresh.**
 - `dashboard-data.example.js` — sample data fallback so the dashboard renders before the first refresh runs.
-- `.state/seen-items.json` — initialized empty; the daily refresh appends to this.
 
 After the first refresh, also:
 
-- `dashboard-data.js` — written by every daily refresh. Sets `window.DASHBOARD_DATA = {…}` with the current portfolio state.
+- `dashboard-data.js` — written by every daily refresh. Sets `window.DASHBOARD_DATA = {…}` with the full portfolio state. This file is both the render payload AND the durable record of every item ever surfaced — no separate state log.
 
 Plus one scheduled task created via the scheduled-tasks MCP:
 
@@ -110,11 +109,8 @@ Copy these files from the plugin's assets directory into the project folder:
 | `methodology.md` | `methodology.md` |
 | `dashboard.html` | `dashboard.html` |
 | `dashboard-data.example.js` | `dashboard-data.example.js` |
-| `seen-items.empty.json` | `.state/seen-items.json` |
 
 Then synthesize `companies.json` from the user's elicitation answers + enrichment + branding (Steps 2–3b) and write it to the project folder. Use the schema in `companies.example.json` as the reference: top-level `settings` (optional) + `companies` array (required).
-
-Create the `.state/` subdirectory if it doesn't exist.
 
 ### Step 5 — Create the scheduled task
 
@@ -136,7 +132,7 @@ If the scheduled-tasks MCP exposes parameters with different names (e.g. `cron` 
 
 Immediately execute the instructions from `daily-prompt.md` against the project folder. This produces the first `dashboard-data.js`. Do not ask the user whether they want this — the goal is that when setup finishes, day one is already done and the dashboard is populated with real data (not just the example fallback).
 
-If the refresh fails partway through (e.g. a search times out), still write a best-effort `dashboard-data.js` with whatever was gathered, save what's in `.state/seen-items.json`, and surface the partial failure to the user.
+If the refresh fails partway through (e.g. a search times out), still write a best-effort `dashboard-data.js` with whatever was gathered (don't leave the file empty or half-written), and surface the partial failure to the user.
 
 ### Step 7 — Hand off with a launch link
 
@@ -177,10 +173,6 @@ Do not dump a long summary of what was written. The handoff is a launch pad, not
 ```
 
 `settings` is optional. All three settings fields are optional within it — anything you omit falls back to the dashboard's defaults.
-
-## Schema for `.state/seen-items.json`
-
-The refresh skill appends to this file. The setup skill only initializes it as `{"items": []}`. See `methodology.md` for the item schema — it's documented there because the refresh skill is what mutates this file.
 
 ## Edge cases
 
