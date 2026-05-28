@@ -1,4 +1,4 @@
-# Portfolio News Monitor
+# Portfolio News Monitor Starter
 
 A Cowork plugin that scaffolds a daily portfolio-news intelligence dashboard. Designed for VCs and LPs (or anyone tracking a list of companies) who want a single page that surfaces what's new across their portfolio every morning, with valuation-sensitive items flagged at the top.
 

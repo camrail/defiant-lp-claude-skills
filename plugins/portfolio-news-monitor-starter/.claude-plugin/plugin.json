@@ -1,5 +1,5 @@
 {
-  "name": "portfolio-news-monitor",
+  "name": "portfolio-news-monitor-starter",
   "version": "0.3.0",
   "description": "Scaffolds a daily portfolio-news intelligence dashboard. Ask for one domain per line, auto-enriches each company, runs the first refresh, and creates daily + weekly scheduled tasks. Dashboard is a constant HTML template; each refresh writes a data file the page loads on open. Customize afterward by chatting to Claude.",
   "author": {

@@ -13,7 +13,7 @@ In Claude Code:
 Then browse and install any plugin:
 
 ```
-/plugin install portfolio-news-monitor@defiant-lp-claude-skills
+/plugin install portfolio-news-monitor-starter@defiant-lp-claude-skills
 ```
 
 Or open the picker with `/plugin` and select from the list.
@@ -22,7 +22,7 @@ Or open the picker with `/plugin` and select from the list.
 
 | Plugin | What it does |
 |---|---|
-| [`portfolio-news-monitor`](./plugins/portfolio-news-monitor/) | Scaffolds a daily portfolio-news dashboard with valuation-sensitive items flagged, plus daily and weekly scheduled refreshes. |
+| [`portfolio-news-monitor-starter`](./plugins/portfolio-news-monitor-starter/) | Scaffolds a daily portfolio-news dashboard with valuation-sensitive items flagged, plus daily and weekly scheduled refreshes. |
 | [`fund-rollup-starter`](./plugins/fund-rollup-starter/) | Guided one-time setup that turns a folder of LP fund statements (PDF or Excel, any administrator) into a portfolio roll-up workbook AND a bespoke, reusable roll-up skill named for the user. |
 
 ## Repo layout
@@ -31,7 +31,7 @@ Or open the picker with `/plugin` and select from the list.
 .claude-plugin/
   marketplace.json          # Marketplace manifest — lists every plugin in this repo
 plugins/
-  portfolio-news-monitor/
+  portfolio-news-monitor-starter/
     .claude-plugin/
       plugin.json           # Plugin manifest
     skills/
