@@ -49,13 +49,26 @@ If the user has selected a Cowork directory, use that. Otherwise ask them where 
 
 ### Step 2 — Elicit the portfolio (keep it minimal — just enough to enrich)
 
-Show an elicitation form with three fields:
+The fast path is a tiny elicitation form. Users who already have their portfolio in a spreadsheet, PDF, or pitch-deck export shouldn't be forced through it — see the "Alternative inputs" note below.
 
-- **Companies** — a single textarea. Label it clearly: **"One domain per line"** with placeholder text like `blitzy.com`<br>`rivia.com`<br>`generalmind.com`. Assume the user follows that instruction — every non-blank line is a domain. Strip whitespace, lowercase, drop any leading `http://` or `https://` or trailing slash, and treat what remains as the domain. Skip blank lines.
+Show an elicitation form with exactly three fields. The first field is the only required one.
+
+- **Portfolio company websites** — a single textarea. Label: **"Portfolio company websites — one per line"**. Placeholder text: literally three example domains on their own lines, nothing else:
+
+  ```
+  anthropic.com
+  openai.com
+  cursor.com
+  ```
+
+  Keep this input box clean and simple — it's the quick-start path. Don't pack alternative formats (pipe-separated rows, JSON, comma lists) into the placeholder or label; that just overwhelms the user. The textarea accepts one website per line. Every non-blank line: strip whitespace, lowercase, drop any leading `http://` or `https://` or trailing slash, and treat what remains as the domain. Skip blank lines. Everything else — name, sector, founders, summary — gets filled in by enrichment in Step 3.
+
 - **Your firm's website** (optional) — used to brand the dashboard with the firm's logo and accent colour. Single-line input. If blank, skip branding and use the default palette.
 - **Refresh time** — what time the daily refresh should run. Default to **07:00 local time, Monday through Friday**. The weekly digest runs **Friday at 16:00 local time** regardless.
 
-Do not ask for category, founders, or summary in the form. Those get filled in by enrichment (Step 3).
+Do not ask for name, category, founders, or summary in the form. Those get filled in by enrichment (Step 3) — that is the whole point.
+
+**Alternative inputs (outside the form).** Before showing the form, if the user has already attached or pasted a portfolio source — an Excel/CSV file, a PDF (e.g. an LP report or pitch deck), a screenshot of a portfolio page, a chunk of HTML from their website, etc. — extract the company websites from that source first and skip straight to confirming the resulting list. If they mention having such a file but haven't attached it yet, invite them to attach it instead of typing into the textarea. You only need a website per company; ignore any other columns or fields, since enrichment will re-derive that data. After extraction, show the list back to the user for a quick confirm/edit before continuing to Step 3.
 
 Aim for 3–10 companies on the first pass. Tell the user they can edit `companies.json` later to add or remove.
 
@@ -189,6 +202,7 @@ The refresh skill appends to this file. The setup skill only initializes it as `
 - Do not embed the methodology rules inside the scheduled-task prompts. The prompts must reference `methodology.md` in the workspace so the user's edits take effect on the next run.
 - Do not modify any plugin files. All writes go into the user's project folder.
 - Do not edit `dashboard.html` to inject the firm logo or accent colour. Branding is data — it lives in `companies.json.settings` and the renderer applies it at load time.
-- Do not ask the user for company details that you can look up. The whole point of enrichment is that they hand you a list of names or domains and get a working monitor back.
+- Do not ask the user for company details that you can look up. The whole point of enrichment is that they hand you a list of websites and get a working monitor back.
+- Do not cram alternative input formats into the textarea's placeholder or label (no pipe-separated rows, no pasted JSON examples, no "any of these formats works" framing). The textarea is the clean, one-website-per-line quick-start path. Richer inputs — spreadsheets, PDFs, screenshots — are handled outside the form (see Step 2's "Alternative inputs" note); the user attaches the file and you parse out the websites.
 - Do not ask the user whether to run the first refresh. Run it.
 - Do not leave placeholder summaries or "TBD" categories in `companies.json`. If enrichment genuinely fails for a company, raise it with the user before writing the file rather than shipping a placeholder.
